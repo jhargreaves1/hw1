@@ -41,7 +41,7 @@
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 1000
+#define MAX_PARTICLES 2000
 #define GRAVITY 0.1
 #define NUM_BOXES 5
 //X Windows variables
@@ -97,7 +97,7 @@ int main(void){
 	game.boxs[i].width = 100;
 	game.boxs[i].height = 10;
 	game.boxs[i].center.x = 120 + i * 90;
-	game.boxs[i].center.y = 500 - i * 70;
+	game.boxs[i].center.y = 500 - i * 100;
 	}
 	//declare bubbler shape
 	game.bubbler.width = 10;
