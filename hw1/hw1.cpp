@@ -354,16 +354,16 @@ void movement(Game *game)
 	}
         // is bucket full?
 	Shape *s =  &game->bucket;
-        if(game->b > 0 && s->center.y>-100 && game->n > 0)
+        if(game->b > 0 && s->center.y>-15 && game->n > 0)
         s->center.y = s->center.y -0.5;
         std::cout << "bucket at " << s->center.y << std::endl;
 	std::cout << "game b= " << game->b << std::endl;
 	if(s->center.y<=60 && game->b==0){
 	   s->center.y = s->center.y + 0.5;
 	}
-	if(s->center.y < -20 ){
+	if(s->center.y < -10 ){
 	  //game->n = game->n-1;
-	    if(game->n <= 5){
+	    if(game->n <= 3) {
 	      s->center.y = s->center.y + 0.5;
 	      game->n = 0;
 	      game->b = 0; 
