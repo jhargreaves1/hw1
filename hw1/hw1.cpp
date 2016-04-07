@@ -69,8 +69,10 @@ struct Particle {
 struct Game {
   Shape boxs[NUM_BOXES];
   Shape bubbler;
+  Shape bucket;
   Particle particle[MAX_PARTICLES];
   int n;
+  int b;
 };
 
 //Function prototypes
@@ -91,7 +93,7 @@ int main(void){
 	//declare game object
 	Game game;
 	game.n=0;
-
+        game.b=0;
 	//declare box shapes
 	for (int i=0; i < NUM_BOXES; i++){
 	game.boxs[i].width = 100;
@@ -104,7 +106,11 @@ int main(void){
 	game.bubbler.height = 20;
 	game.bubbler.center.x = 100;
 	game.bubbler.center.y = 510;
-	
+	//declare bucket shape
+	game.bucket.width = 20;
+	game.bucket.height = 20;
+	game.bucket.center.x = 620;
+	game.bucket.center.y = 60;
 	//start animation
 	while(!done) {
 		while(XPending(dpy)) {
@@ -177,7 +183,7 @@ void init_opengl(void){
 void makeParticle(Game *game, int x, int y) {
 	if (game->n >= MAX_PARTICLES)
 		return;
-	std::cout << "makeParticle() " << x << " " << y << std::endl;
+//	std::cout << "makeParticle() " << x << " " << y << std::endl;
 	//position of particle
 	Particle *p = &game->particle[game->n];
 	p->s.center.x = x;
@@ -242,7 +248,7 @@ void movement(Game *game)
 	Particle *p;
 
 	//bubler
-	if(game->n < MAX_PARTICLES-20){
+	if(game->n < MAX_PARTICLES && game->b <2000){
 	  int x=100,y=530;
 	   makeParticle(game,x, y);
 	}
@@ -265,7 +271,7 @@ void movement(Game *game)
 	    (p->s.center.x <= s->center.x + s->width  ) &&   
 	    (p->s.center.x >= s->center.x - s->width) )	{
 		  //collision with box	
-	std::cout << "y velocity= " << p->velocity.y << " x velocity= " << p->velocity.x << std::endl;
+//	std::cout << "y velocity= " << p->velocity.y << " x velocity= " << p->velocity.x << std::endl;
 		p->s.center.y = s->center.y + s->height + 0.1;
 		p->velocity.y = (-(p->velocity.y/2));    // -0.5;
 		if(p->velocity.y >= 0)		
@@ -275,10 +281,11 @@ void movement(Game *game)
 		    ( (p->velocity.x) <  0 && (p->velocity.x) > -0.5) )
 		  p->velocity.x = p->velocity.x*1.01;
 		
-	std::cout << "y velocity= " << p->velocity.y << " x velocity = " << p->velocity.x << std::endl;
-	std::cout << "number of particles " << game->n << std::endl;
+//	std::cout << "y velocity= " << p->velocity.y << " x velocity = " << p->velocity.x << std::endl;
+//	std::cout << "number of particles " << game->n << std::endl;
 		}
 	}
+       
 	//collision with other particles
 	Particle *op;
 	for(int j=0;j < game->n; j++) {
@@ -313,12 +320,56 @@ void movement(Game *game)
 		  op->s.center.y = op->s.center.y -0.1;
 		  }
 	  }
-	//check for off-screen
+ //check for bucket collision	
+        s = &game->bucket;
+        if ( (p->s.center.y <= s->center.y + s->height ) &&   
+	    (p->s.center.y >= s->center.y - s->height -5 ) &&
+	    (p->s.center.x <= s->center.x + s->width +5 ) &&   
+	    (p->s.center.x >= s->center.x - s->width -5 ))	{
+               p->velocity.y = 0;
+               p->velocity.x = 0;
+	       game->b++;
+              
+                if (p->s.center.x < s->center.x - (s->width/2)){
+                p->s.center.x = p->s.center.x+15;
+                p->s.center.y =p->s.center.y+3;
+                        }
+                if (p->s.center.x > s->center.x + (s->width/2)){
+                        p->s.center.x = p->s.center.x-5;
+                        p->s.center.y = p->s.center.y+3;
+                         }
+                if (p->s.center.y < s->center.y ){
+                p->s.center.y = p->s.center.y+20;
+                p->velocity.y =2;
+                }
+           }
+
+        //check for off-screen
 	if (p->s.center.y < 0.0)  {
+              std::cout << "y = " << p->s.center.y << " x = " << p->s.center.x << std::endl;
+	       std::cout << "number of particles " << game->n << std::endl;
 	    game->particle[i]=game->particle[game->n-1];
 	    game->n--;
 	  }
 	}
+        // is bucket full?
+	Shape *s =  &game->bucket;
+        if(game->b > 0 && s->center.y>-100 && game->n > 0)
+        s->center.y = s->center.y -0.5;
+        std::cout << "bucket at " << s->center.y << std::endl;
+	std::cout << "game b= " << game->b << std::endl;
+	if(s->center.y<=60 && game->b==0){
+	   s->center.y = s->center.y + 0.5;
+	}
+	if(s->center.y < -20 ){
+	  //game->n = game->n-1;
+	    if(game->n <= 5){
+	      s->center.y = s->center.y + 0.5;
+	      game->n = 0;
+	      game->b = 0; 
+	    }
+	}
+	
 }
 
 void render(Game *game){
@@ -359,6 +410,21 @@ void render(Game *game){
 	glEnd();
 	glPopMatrix();
 	
+	//draw bucket
+	glColor3ub(200,140,90);
+	s = &game->bucket;
+	glPushMatrix();
+	glTranslatef(s->center.x, s->center.y, s->center.z);
+	w = s->width;
+	h = s->height;
+	glBegin(GL_QUADS);
+	glVertex2i(-w,-h);
+	glVertex2i(-w, h);
+	glVertex2i( w, h);
+	glVertex2i( w,-h);
+	glEnd();
+	glPopMatrix();
+
 	//draw all particles here
 	glPushMatrix();
 	int cl1=150,cl2=160,cl3=220;
