@@ -1,33 +1,7 @@
 //cmps335 HW1
 //John Hargreaves
 //
-//cs335 Spring 2015 Lab-1
-//This program demonstrates the use of OpenGL and XWindows
-//
-//Assignment is to modify this program.
-//You will follow along with your instructor.
-//
-//Elements to be learned in this lab...
-//
-//. general animation framework
-//. animation loop
-//. object definition and movement
-//. collision detection
-//. mouse/keyboard interaction
-//. object constructor
-//. coding style
-//. defined constants
-//. use of static variables
-//. dynamic memory allocation
-//. simple opengl components
-//. git
-//
-//elements we will add to program...
-//. Game constructor
-//. multiple particles
-//. gravity
-//. collision detection
-//. more objects
+//cs335 
 //
 #include <iostream>
 #include <cstdlib>
@@ -37,6 +11,10 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <GL/glx.h>
+extern "C" {
+	#include "fonts.h"
+}
+
 
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
@@ -130,7 +108,7 @@ int main(void){
 void set_title(void){
 	//Set the window title bar.
 	XMapWindow(dpy, win);
-	XStoreName(dpy, win, "335 Lab1   LMB for particle");
+	XStoreName(dpy, win, "335 hw1   Waterfall process");
 }
 
 void cleanupXWindows(void) {
@@ -178,6 +156,9 @@ void init_opengl(void){
 	glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
 	//Set the screen background color
 	glClearColor(0.1, 0.1, 0.1, 1.0);
+	//Do this to allow fonts
+	glEnable(GL_TEXTURE_2D);
+	initialize_fonts();
 }
 
 void makeParticle(Game *game, int x, int y) {
@@ -374,9 +355,51 @@ void movement(Game *game)
 
 void render(Game *game){
 	float w, h;
+	Rect r;
 	glClear(GL_COLOR_BUFFER_BIT);
+	//
+	r.bot = 600 - 20;
+	r.left = 10;
+	r.center = 0;
+	ggprint8b(&r, 16, 0x00ff0000, "             cs335 Waterfall Model");
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "     Requirements " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "               Design " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                         Coding " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                                   Testing" );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                                             Maintenance " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
+	ggprint16(&r, 16, 0x00ffff00, "                      " );
 	//Draw shapes...
-
 	//draw boxs
 	Shape *s;
 	glColor3ub(90,140,90);
