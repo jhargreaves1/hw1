@@ -19,7 +19,7 @@ extern "C" {
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
 
-#define MAX_PARTICLES 2000
+#define MAX_PARTICLES 10000
 #define GRAVITY 0.1
 #define NUM_BOXES 5
 //X Windows variables
@@ -169,9 +169,9 @@ void makeParticle(Game *game, int x, int y) {
 	Particle *p = &game->particle[game->n];
 	p->s.center.x = x;
 	p->s.center.y = y;
-	p->s.width=5;
-	p->s.height=5;
-	p->velocity.y =  3.0;
+	p->s.width=2;
+	p->s.height=2;
+	p->velocity.y =  2.0;
 	p->velocity.x =  0.01;
 	game->n++;
 
@@ -229,8 +229,9 @@ void movement(Game *game)
 	Particle *p;
 
 	//bubler
-	if(game->n < MAX_PARTICLES && game->b <2000){
+	if(game->n < MAX_PARTICLES && game->b <3000){
 	  int x=100,y=530;
+	  for(int i=0;i<4;i++)
 	   makeParticle(game,x, y);
 	}
 	
@@ -252,7 +253,7 @@ void movement(Game *game)
 	    (p->s.center.x <= s->center.x + s->width  ) &&   
 	    (p->s.center.x >= s->center.x - s->width) )	{
 		  //collision with box	
-//	std::cout << "y velocity= " << p->velocity.y << " x velocity= " << p->velocity.x << std::endl;
+	//	std::cout << "y velocity= " << p->velocity.y << " x velocity= " << p->velocity.x << std::endl;
 		p->s.center.y = s->center.y + s->height + 0.1;
 		p->velocity.y = (-(p->velocity.y/2));    // -0.5;
 		if(p->velocity.y >= 0)		
@@ -262,8 +263,8 @@ void movement(Game *game)
 		    ( (p->velocity.x) <  0 && (p->velocity.x) > -0.5) )
 		  p->velocity.x = p->velocity.x*1.01;
 		
-//	std::cout << "y velocity= " << p->velocity.y << " x velocity = " << p->velocity.x << std::endl;
-//	std::cout << "number of particles " << game->n << std::endl;
+	//	std::cout << "y velocity= " << p->velocity.y << " x velocity = " << p->velocity.x << std::endl;
+	//	std::cout << "number of particles " << game->n << std::endl;
 		}
 	}
        
@@ -326,25 +327,27 @@ void movement(Game *game)
            }
 
         //check for off-screen
-	if (p->s.center.y < 0.0)  {
-              std::cout << "y = " << p->s.center.y << " x = " << p->s.center.x << std::endl;
-	       std::cout << "number of particles " << game->n << std::endl;
+	if (p->s.center.y < 1)  {
+        //std::cout << "y = " << p->s.center.y << " x = " << p->s.center.x << std::endl;
 	    game->particle[i]=game->particle[game->n-1];
 	    game->n--;
 	  }
 	}
         // is bucket full?
 	Shape *s =  &game->bucket;
+        
         if(game->b > 0 && s->center.y>-15 && game->n > 0)
         s->center.y = s->center.y -0.5;
-        std::cout << "bucket at " << s->center.y << std::endl;
-	std::cout << "game b= " << game->b << std::endl;
-	if(s->center.y<=60 && game->b==0){
-	   s->center.y = s->center.y + 0.5;
+		//std::cout << "bucket at " << s->center.y << std::endl;
+		//std::cout << "game b= " << game->b << std::endl;
+		
+		if(s->center.y<=60 && game->b==0){
+			s->center.y = s->center.y + 0.5;
 	}
+	//std::cout << "number of particles " << game->n << std::endl;
 	if(s->center.y < -10 ){
 	  //game->n = game->n-1;
-	    if(game->n <= 3) {
+	    if(game->n <= 15) {
 	      s->center.y = s->center.y + 0.5;
 	      game->n = 0;
 	      game->b = 0; 
@@ -355,50 +358,8 @@ void movement(Game *game)
 
 void render(Game *game){
 	float w, h;
-	Rect r;
+	
 	glClear(GL_COLOR_BUFFER_BIT);
-	//
-	r.bot = 600 - 20;
-	r.left = 10;
-	r.center = 0;
-	ggprint8b(&r, 16, 0x00ff0000, "             cs335 Waterfall Model");
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "     Requirements " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "               Design " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                         Coding " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                                   Testing" );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                                             Maintenance " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
-	ggprint16(&r, 16, 0x00ffff00, "                      " );
 	//Draw shapes...
 	//draw boxs
 	Shape *s;
@@ -456,17 +417,39 @@ void render(Game *game){
 	  if(cl3>250) cl3=120;
 	  // if(cl1>250) cl1=100;
 	  if(cl2>200) cl2=140;
-
 	Vec *c = &game->particle[i].s.center;
-	w = 3;
-	h = 3;
-	
+	w = 2;
+	h = 2;
 	glBegin(GL_QUADS);
 		glVertex2i(c->x-w, c->y-h);
 		glVertex2i(c->x-w, c->y+h);
 		glVertex2i(c->x+w, c->y+h);
 		glVertex2i(c->x+w, c->y-h);
 	}
+	
+	Rect r;
+	//
+	r.bot = WINDOW_HEIGHT - 50;
+	ggprint16(&r, 16, 0x00ff0000, "");
+	
+	r.left = 300;
+	ggprint16(&r, 16, 0x00ff0000, "CS335 Waterfall Model");
+	r.left = 150;
+	r.bot = WINDOW_HEIGHT -110;
+	ggprint16(&r, 16, 0x00ffff00,"Requirements " );
+	r.left = 200;
+	r.bot = WINDOW_HEIGHT -210;
+	ggprint16(&r, 16, 0x00ffff00,"Design " );
+	r.left = 300;
+	r.bot = WINDOW_HEIGHT -310;
+	ggprint16(&r, 16, 0x00ffff00,"Coding " );
+	r.left = 400;
+	r.bot = WINDOW_HEIGHT -410;
+	ggprint16(&r, 16, 0x00ffff00,"Testing" );
+	r.left = 500;
+	r.bot = WINDOW_HEIGHT -510;
+	ggprint16(&r, 16, 0x00ffff00,"Maintenance " );
+	
 		glEnd();
 		glPopMatrix();
 	
