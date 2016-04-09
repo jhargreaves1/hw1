@@ -15,6 +15,12 @@ extern "C" {
 	#include "fonts.h"
 }
 
+typedef float Flt;
+
+#define MakeVector(x,y,z,v) (v)[0]=(x),(v)[1]=(y),(v)[2]=(z)
+#define VecNegate(a) (a)[0]=(-(a)[0]); (a)[1]=(-(a)[1]); (a)[2]=(-(a)[2]);
+#define VecDot(a,b) ((a)[0]*(b)[0]+(a)[1]*(b)[1]+(a)[2]*(b)[2])
+#define VecCopy(a,b) (b)[0]=(a)[0];(b)[1]=(a)[1];(b)[2]=(a)[2];
 
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
@@ -44,10 +50,19 @@ struct Particle {
 	Vec velocity;
 };
 
+typedef struct t_Sphere {
+	Vec pos;
+	Vec vel;
+	float radius;
+	float mass;
+} Sphere;
+
+
 struct Game {
   Shape boxs[NUM_BOXES];
   Shape bubbler;
   Shape bucket;
+  Sphere sphere1;
   Particle particle[MAX_PARTICLES];
   int n;
   int b;
@@ -61,17 +76,20 @@ void check_mouse(XEvent *e, Game *game);
 int check_keys(XEvent *e, Game *game);
 void movement(Game *game);
 void render(Game *game);
-
+void initSphere(Game *game);
 
 int main(void){
 	int done=0;
 	srand(time(NULL));
 	initXWindows();
 	init_opengl();
+	
 	//declare game object
 	Game game;
 	game.n=0;
-        game.b=0;
+    game.b=0;
+    
+    initSphere(&game);
 	//declare box shapes
 	for (int i=0; i < NUM_BOXES; i++){
 	game.boxs[i].width = 100;
@@ -115,6 +133,42 @@ void cleanupXWindows(void) {
 	//do not change
 	XDestroyWindow(dpy, win);
 	XCloseDisplay(dpy);
+}
+
+
+void drawSphere(Flt rad)
+{
+	int i;
+	static int firsttime=1;
+	static Flt verts[32][2];
+	static int n=32;
+	if (firsttime) {
+		Flt ang=0.0;
+		Flt inc = 3.14159 * 2.0 / (Flt)n;
+		for (i=0; i<n; i++) {
+			verts[i][0] = sin(ang);
+			verts[i][1] = cos(ang);
+			ang += inc;
+		}
+		firsttime=0;
+	}
+	glBegin(GL_TRIANGLE_FAN);
+		for (i=0; i<n; i++) {
+			glVertex2f(verts[i][0]*rad, verts[i][1]*rad);
+		}
+	glEnd();
+}
+
+void initSphere(Game *g)
+{
+	Sphere *s1 = &g->sphere1;
+	s1->pos.x = 140;
+	s1->pos.y = 570;
+	s1->vel.x = 1.6;
+	s1->vel.y = 0.0;
+	s1->radius = 10.0;
+	s1->mass = 1.0;
+	
 }
 
 void initXWindows(void) {
@@ -224,20 +278,47 @@ int check_keys(XEvent *e, Game *game){
 	return 0;
 }
 
+void VecNormalize(Vec v)
+{
+	Flt dist = v.x*v.x + v.y*v.y + v.z*v.z;
+	if (dist==0.0)
+		return;
+	Flt len = 1.0 / sqrt(dist);
+	v.x *= len;
+	v.y *= len;
+	v.z *= len;
+}
+
+
 void movement(Game *game)
 {
 	Particle *p;
-
-	//bubler
+	Sphere *sp;
+	
+	//bubbler
 	if(game->n < MAX_PARTICLES && game->b <3000){
 	  int x=100,y=530;
 	  for(int i=0;i<4;i++)
 	   makeParticle(game,x, y);
 	}
 	
+	//sphere
+	sp= &game->sphere1;
+	sp->pos.x += sp->vel.x;
+	sp->pos.y += sp->vel.y;
+	if(sp->vel.y > -2)
+	sp->vel.y -= GRAVITY;
+	if(sp->vel.y>0)
+	sp->radius = sp->radius+ sp->vel.y/4;
+	if(sp->pos.y < 0){
+	sp->pos.y = 620;
+	sp->pos.x = 0;
+	if(sp->radius > 50)
+		sp->radius = 10;
+	}
+	//particles
 	if (game->n <= 0)
 		return;
-
 	for (int i=0;i<game->n;i++){
 	p = &game->particle[i];
 	p->s.center.x += p->velocity.x;
@@ -248,11 +329,38 @@ void movement(Game *game)
 	Shape *s;
 	for(int b =0;b<NUM_BOXES;b++){
 	s = &game->boxs[b];
+	// collision sphere with box
+	Flt distance;
+		distance = sp->pos.y - sp->radius;
+	//std::cout << "distance= " << distance << " y velocity= " << sp->vel.y << std::endl;
+	if(	distance < s->center.y + s->height && 
+		distance > s->center.y - s->height &&
+		sp->pos.x < s->center.x + s->width &&
+		sp->pos.x > s->center.x - s->width){
+		//std::cout << "Collision" <<  std::endl;
+		sp->vel.y = -(sp->vel.y)*1;
+		sp->pos.x++;
+		sp->pos.y++;
+	}
+	//
+	//check for sphere collision with bucket
+        s = &game->bucket;
+        distance = sp->pos.y - sp->radius;
+        if(	distance < s->center.y + s->height && 
+		distance > s->center.y - s->height &&
+		sp->pos.x < s->center.x + s->width &&
+		sp->pos.x > s->center.x - s->width){
+		sp->vel.y = -(sp->vel.y)*1;
+		sp->pos.x++;
+		sp->pos.y++;
+		}
+	//collision particle with box
+	s = &game->boxs[b];
 	if( (p->s.center.y <= s->center.y + s->height ) &&   
 	    (p->s.center.y >= s->center.y - s->height ) &&
 	    (p->s.center.x <= s->center.x + s->width  ) &&   
 	    (p->s.center.x >= s->center.x - s->width) )	{
-		  //collision with box	
+		  
 	//	std::cout << "y velocity= " << p->velocity.y << " x velocity= " << p->velocity.x << std::endl;
 		p->s.center.y = s->center.y + s->height + 0.1;
 		p->velocity.y = (-(p->velocity.y/2));    // -0.5;
@@ -285,24 +393,19 @@ void movement(Game *game)
 			p->velocity.x = p->velocity.x + op->velocity.x/16;
 		else
 			p->velocity.x = p->velocity.x - op->velocity.x/16;
-		  
-		  //if(p->velocity.y > 0 )
-		  //p->velocity.y = (p->velocity.y) - op->velocity.y/16;
-		  
+		  		   
 		  if(op->velocity.x > 0 && op->velocity.x < 2)
 		  op->velocity.x = op->velocity.x + x/16;
 		else
 		  op->velocity.x = op->velocity.x - x/16;
 		
-		  //if(op->velocity.y > 0 && op->velocity.y < 2)
-		  //op->velocity.y = (op->velocity.y) - y/16;
 		  p->s.center.y = p->s.center.y - 0.2;
 		  p->s.center.x = p->s.center.x + 0.4;
 		  op->s.center.x = op->s.center.x - 0.4;
 		  op->s.center.y = op->s.center.y -0.1;
 		  }
 	  }
- //check for bucket collision	
+		//check for bucket collision	
         s = &game->bucket;
         if ( (p->s.center.y <= s->center.y + s->height ) &&   
 	    (p->s.center.y >= s->center.y - s->height -5 ) &&
@@ -361,6 +464,14 @@ void render(Game *game){
 	
 	glClear(GL_COLOR_BUFFER_BIT);
 	//Draw shapes...
+	
+	//draw Sphere
+	glColor3ub(250,250,0);
+	glPushMatrix();
+	glTranslatef(game->sphere1.pos.x, game->sphere1.pos.y, game->sphere1.pos.z);
+	drawSphere(game->sphere1.radius);
+	glPopMatrix();
+	
 	//draw boxs
 	Shape *s;
 	glColor3ub(90,140,90);
@@ -395,8 +506,9 @@ void render(Game *game){
 	glPopMatrix();
 	
 	//draw bucket
-	glColor3ub(200,140,90);
 	s = &game->bucket;
+	glColor3ub(200, 140, 90 +s->center.y *2);
+	
 	glPushMatrix();
 	glTranslatef(s->center.x, s->center.y, s->center.z);
 	w = s->width;
